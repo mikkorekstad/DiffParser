@@ -1,14 +1,43 @@
+"""
+Defects4j-bugs parser.
+"""
+
 import json
 
+re_separate_files = r'-{3} a\/.*?\.[\w:]+\n\+{3} b\/.*?\.[\w:]+\n@@ '
 
-def main(file_name):
 
+def parse(file_name, remove_multi_line=True):
+    """Parsing function"""
+
+    # Read the data file from json format
     with open(file_name, 'r') as f:
         data = json.load(f)
 
-    data = remove_multiple_file_bugs(data)
-    check_multiple_line_bugs(data)
-    #print(f"Total number of bugs with more than one file: {n}, out of: {n_tot}")
+    # Get the original length of the data
+    original_data_length = len(data)
+    print(f"Original data length: {original_data_length}")
+
+    # Remove bugs covering multiple files, if needed
+    if remove_multi_line:
+        data = remove_multiple_file_bugs(data)
+        print(f"Removed {original_data_length - len(data)} bugs, because they covered multiple files.")
+
+        # Print out any remaining bugs covering multiple files, to make sure that they are not there!
+        check_multiple_line_bugs(data)
+
+    parse_all_diffs(data)
+
+
+def parse_all_diffs(data):
+    for bug in data:
+        print(f"Working with bugId: {bug['bugId']}")
+        diff = bug['diff']
+        parse_diff(diff)
+
+
+def parse_diff(diff):
+    pass
 
 
 def remove_multiple_file_bugs(original_data):
@@ -24,4 +53,4 @@ def check_multiple_line_bugs(lst):
 if __name__ == '__main__':
     # data_set = '../../data/sample.json'
     data_set = '../../data/defects4j-bugs.json'
-    main(data_set)
+    parse(data_set, remove_multi_line=True)
