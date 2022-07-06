@@ -3,6 +3,8 @@ Defects4j-bugs parser.
 """
 
 import json
+import logging
+import re
 
 re_separate_files = r'-{3} a\/.*?\.[\w:]+\n\+{3} b\/.*?\.[\w:]+\n@@ '
 
@@ -16,7 +18,7 @@ def parse(file_name, remove_multi_line=True):
 
     # Get the original length of the data
     original_data_length = len(data)
-    print(f"Original data length: {original_data_length}")
+    print(f"Original amount of bugs: {original_data_length}")
 
     # Remove bugs covering multiple files, if needed
     if remove_multi_line:
@@ -26,18 +28,25 @@ def parse(file_name, remove_multi_line=True):
         # Print out any remaining bugs covering multiple files, to make sure that they are not there!
         check_multiple_line_bugs(data)
 
-    parse_all_diffs(data)
+    # Parse the diffs to make them interpretable
+    [parse_bug(bug) for bug in data]
 
 
-def parse_all_diffs(data):
-    for bug in data:
-        print(f"Working with bugId: {bug['bugId']}")
-        diff = bug['diff']
-        parse_diff(diff)
+def parse_bug(bug):
+    """Function to parse a single bug"""
 
+    # Get some initial information
+    n_files = len(bug['changedFiles'])
+    logging.info(f"Working with bugId: {bug['bugId']} which have changes in {n_files} files.")
 
-def parse_diff(diff):
-    pass
+    # Split the diffs from each file:
+    list_of_diffs = re.split(re_separate_files, bug['diff'])
+
+    loc = re.("(?<=\@@ )(.*?)(?=\ @@)", bug['diff'])
+
+    for line in loc:
+        print("New file")
+        print(line)
 
 
 def remove_multiple_file_bugs(original_data):
@@ -51,6 +60,7 @@ def check_multiple_line_bugs(lst):
 
 
 if __name__ == '__main__':
-    # data_set = '../../data/sample.json'
-    data_set = '../../data/defects4j-bugs.json'
-    parse(data_set, remove_multi_line=True)
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+    data_set = '../../data/sample.json'
+    # data_set = '../../data/defects4j-bugs.json'
+    parse(data_set, remove_multi_line=False)
