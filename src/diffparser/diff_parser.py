@@ -56,20 +56,23 @@ def separate_bug(unstructured_diff):
     if unstructured_diff:  # TODO: Change to a function for validation of diff later
         logging.debug("New file")
         change_loc = get_loc(diff_split[1])
-        buggy, patched = filter_diff(diff_split[2])
-        # TODO: Check that the output code is of the length described in the diff
+        buggy, patched = filter_diff(diff_split[2], change_loc)
+
         print("Here comes the buggy code: ")
         print(buggy)
         print("Here comes the patched code: ")
         print(patched)
-        #print(f'{buggy =}')
     return change_loc, buggy, patched
 
 
-def filter_diff(diff):
+def filter_diff(diff, loc_dict):
     """Function to actually parse the diff."""
+
+    # Define empty strings for the code-snippets
     buggy_code = ''
     patched_code = ''
+
+    # Iterate through each line of the diff, and assign the lines to the correct variable
     for line in diff.splitlines():
         if line[0] == "-":
             buggy_code += (" " + line[1:] + "\n")
@@ -78,6 +81,12 @@ def filter_diff(diff):
         else:
             buggy_code += (" " + line + "\n")
             patched_code += (" " + line + "\n")
+
+    # Log information about code length:
+    logging.debug(f"Buggy code is {len(buggy_code.splitlines())} lines, expected {loc_dict['buggy_n_lines']}.")
+    logging.debug(f"Patched code is {len(patched_code.splitlines())} lines, expected {loc_dict['patched_n_lines']}.")
+
+    # Return the parsed code-snippets
     return buggy_code, patched_code
 
 
