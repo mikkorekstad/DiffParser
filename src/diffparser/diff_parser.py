@@ -6,8 +6,8 @@ import json
 import logging
 import re
 
-re_sep_files = r'-{3} a\/.*?\.[\w:]+\n\+{3} b\/.*?\.[\w:]+\n@@ '
-re_sep_loc = r'-(\d+,\d* \+\d+,\d* @@ )'
+re_sep_files = r'-{3} a\/.*?\.[\w:]+\n\+{3} b\/.*?\.[\w:]+\n'
+re_sep_loc = r'@@ -*(\d+,\d* \+\d+,\d* @@) '
 
 
 def parse(file_name, remove_multi_line=True):
@@ -51,18 +51,45 @@ def parse_bug(bug):
 def separate_bug(unstructured_diff):
     """Separate bug into location, buggy part and patched part."""
     change_loc, buggy, patched = 0, 0, 0
-    diff_split = re.split(re_sep_loc, unstructured_diff)
+    diff_locations = validate_diff_split(re.split(re_sep_loc, unstructured_diff))
+    n_snippets = len(diff_locations)
 
-    if unstructured_diff:  # TODO: Change to a function for validation of diff later
-        logging.debug("New file")
-        change_loc = get_loc(diff_split[1])
-        buggy, patched = filter_diff(diff_split[2], change_loc)
+    if n_snippets > 2:
+        logging.debug(f"Handling a bug with multiple code snippets altered.")
 
-        print("Here comes the buggy code: ")
-        print(buggy)
-        print("Here comes the patched code: ")
-        print(patched)
+    print(f'{len(diff_locations) = }')
+
+    buggy_codes = []
+    patched_codes = []
+
+    for i, element in enumerate(diff_locations):
+        if i % 2 == 5:
+
+
+
+
+
+    # if validate_diff_split(unstructured_diff):  # TODO: Change to a function for validation of diff later
+    # print(f'{diff_locations = }')
+    #logging.debug("New file")
+    #change_loc = get_loc(diff_locations[1])
+    #buggy, patched = filter_diff(diff_locations[2], change_loc)
+
+    #print("Here comes the unparsed code diff: ")
+    # print(diff_locations[2][-10:])
+
+    #print("Here comes the buggy code: ")
+    #print(buggy[-10:])
+    # print("FHAKSHF")
+    #print(buggy)
+    # '694,14 +694,6 @@ ',
+    #print("Here comes the patched code: ")
+    #print(patched)
     return change_loc, buggy, patched
+
+
+def validate_diff_split(diff_split):
+    return [element for element in diff_split if element]
 
 
 def filter_diff(diff, loc_dict):
@@ -72,19 +99,31 @@ def filter_diff(diff, loc_dict):
     buggy_code = ''
     patched_code = ''
 
+    buggy_count = 0
+    patched_count = 0
+
     # Iterate through each line of the diff, and assign the lines to the correct variable
     for line in diff.splitlines():
         if line[0] == "-":
-            buggy_code += (" " + line[1:] + "\n")
+            buggy_code += (line[1:] + "\n")
+            buggy_count += 1
         elif line[0] == "+":
-            patched_code += (" " + line[1:] + "\n")
+            patched_code += (line[1:] + "\n")
+            patched_count += 1
         else:
-            buggy_code += (" " + line + "\n")
-            patched_code += (" " + line + "\n")
+            buggy_code += (line + "\n")
+            patched_code += (line + "\n")
+            # buggy_count += 1
+            # patched_count += 1
 
     # Log information about code length:
-    logging.debug(f"Buggy code is {len(buggy_code.splitlines())} lines, expected {loc_dict['buggy_n_lines']}.")
-    logging.debug(f"Patched code is {len(patched_code.splitlines())} lines, expected {loc_dict['patched_n_lines']}.")
+    n_buggy = int(loc_dict['buggy_n_lines'])
+    n_patched = int(loc_dict['patched_n_lines'])
+
+    logging.debug(f"Buggy code is {len(buggy_code.splitlines())} lines, expected {n_buggy}.")
+    logging.debug(f"Patched code is {len(patched_code.splitlines())} lines, expected {n_patched}.")
+    logging.debug(f"Diff length is {len(diff.splitlines())} lines, containing "
+                  f"{buggy_count} removals and {patched_count} additions")
 
     # Return the parsed code-snippets
     return buggy_code, patched_code
@@ -118,6 +157,6 @@ def check_multiple_line_bugs(lst):
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-    data_set = '../../data/sample.json'
-    # data_set = '../../data/defects4j-bugs.json'
+    # data_set = '../../data/sample.json'
+    data_set = '../../data/defects4j-bugs.json'
     parse(data_set, remove_multi_line=False)
