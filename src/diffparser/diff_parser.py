@@ -62,8 +62,7 @@ def separate_bug(unstructured_diff):
     buggy_codes = []
     patched_codes = []
 
-    for i, element in enumerate(diff_locations):
-        if i % 2 == 5:
+
 
 
 
