@@ -11,6 +11,7 @@ class DiffParser(object):
 
     re_sep_files = r'-{3} a\/.*?\.[\w:]+\n\+{3} b\/.*?\.[\w:]+\n'
     re_sep_loc = r'@@ -*(\d+,\d* \+\d+,\d* @@) '
+    re_sep_snippets = r'@@ -*(\d+,\d* \+\d+,\d* @@) '
 
     def __init__(self, file_name, remove_multiple_diffs=True):
         """Constructor."""
@@ -19,8 +20,6 @@ class DiffParser(object):
         self.file_name = file_name
         self.remove_multiple_diffs = remove_multiple_diffs
         self.data = self.read_file(self.file_name)
-
-        # TODO: Remove multiple diffs
 
     @staticmethod
     def read_file(file_name):
@@ -56,12 +55,19 @@ class DiffParser(object):
         logging.info(f"{file_splits = }")
 
         for file_split, file_name in zip(file_splits, file_names):
-            buggy, patched = self.separate_buggy_and_patched(file_split)
-            commit['changedFiles'][file_name]['buggyCode'] = buggy
-            commit['changedFiles'][file_name]['patchedCode'] = patched
+            separated_snippets = self.clean_up_file_split(file_split)
+            buggy_list = []
+            patched_list = []
+            for snippet in separated_snippets:
+                buggy, patched = self.separate_buggy_and_patched(snippet)
+                buggy_list.append(buggy)
+                patched_list.append(patched)
 
+            commit['changedFiles'][file_name]['buggyCode'] = buggy_list
+            commit['changedFiles'][file_name]['patchedCode'] = patched_list
 
-    def separate_buggy_and_patched(self, file_split):
+    @staticmethod
+    def separate_buggy_and_patched(file_split):
         # Define empty strings for the code-snippets
         buggy_code = ''
         patched_code = ''
@@ -82,10 +88,10 @@ class DiffParser(object):
                 patched_code += (line + "\n")
         return buggy_code, patched_code
 
-
-        #for unstructured_diff in file_splits:
-        #    change_loc, buggy, patched = separate_bug(unstructured_diff)
-
+    def clean_up_file_split(self, file_split):
+        temp_list = re.split(self.re_sep_snippets, file_split)
+        separated_snippets = [snippet for i, snippet in enumerate(temp_list[2:]) if i % 2 == 0]
+        return separated_snippets
 
 
 if __name__ == '__main__':
@@ -94,6 +100,6 @@ if __name__ == '__main__':
     data_set = '../../data/defects4j-bugs.json'
     data_set1 = '../../data/sample.json'
     data_set2 = '../../data/sample2.json'
-    parser = DiffParser(data_set2, remove_multiple_diffs=False)
+    parser = DiffParser(data_set, remove_multiple_diffs=False)
     parser.parse_all_commits()
     print(f'{parser.data = }')
