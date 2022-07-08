@@ -22,6 +22,8 @@ class Defects4jDiffParser(object):
         self.remove_multiple_diffs = remove_multiple_diffs
         self.data = self.read_file(self.file_name)
         self.n_bugs = len(self.data)
+        self.last_line = False
+        self.code_started = False
         # Log some info
         logging.info(f"The data contains {self.n_bugs} bugs!")
 
@@ -30,46 +32,82 @@ class Defects4jDiffParser(object):
         [self.parse_commit(commit) for commit in self.data]
 
     def parse_commit(self, commit):
-        """Work through the commit and and the changes to each file."""
-        # Quickly check for multiple files
-        n_files = len(commit['changedFiles'])
-        logging.info(f"Working with bugId: {commit['bugId']} which have changes in {n_files} files.")
-        if (n_files > 1) and self.remove_multiple_diffs:
-            logging.info("Removed commit due to multiple files.")
-            return False
 
-        # Split the from each file:
-        file_splits = re.split(self.re_sep_files, commit['diff'])
-        file_splits = [file for file in file_splits if file]
+        # For each commit I want to separate what happens in each file first.
+        list_of_files = list(commit['changedFiles'].keys())
+        print(f"Got a list of {len(list_of_files)} filenames: {list_of_files}")
+        sep_dict_files = self.sep_by_files(commit['diff'], list_of_files)
 
-        # file_names = get_file_names_from_diff(commit['diff'])
-        # file_names = re.findall('(?<=-{3} a/src/main/java/)(.*)', commit['diff'])
-        # print(f'{file_names = }')
+        for key, value in sep_dict_files.items():
+            sep_dict_snippets = self.sep_by_snippets(value)
+            commit['changedFiles'][key]['buggyCode'] = sep_dict_snippets['buggyCode']
+            commit['changedFiles'][key]['patchedCode'] = sep_dict_snippets['patchedCode']
 
-        # Remove empty strings from list of file splits.
+            #for line in value:
+            #     print(line)
+
+    def sep_by_snippets(self, un_separated):
+        buggy = []
+        patched = []
+        current_snippet = -1
+        sep_dict = {'buggyCode': buggy, 'patchedCode': patched}
+        for i, line in enumerate(un_separated):
+            if re.search(r'(@@ -*\d+,\d* \+\d+,\d* @@)', line):
+                line_split = re.split(r'(@@ -*\d+,\d* \+\d+,\d* @@)', line)
+                print(f'{[element for element in line_split if element] =}')
+                line = [element for element in line_split if element][-1]
+                current_snippet += 1
+                buggy.append([])
+                patched.append([])
+
+            if line[0] == '-':
+                buggy[current_snippet].append(" " + line[1:])
+            elif line[0] == '+':
+                patched[current_snippet].append(" " + line[1:])
+            else:
+                buggy[current_snippet].append(" " + line[1:])
+                patched[current_snippet].append(" " + line[1:])
+
+        return sep_dict
+
+    def sep_by_files(self, diff, list_of_files):
+        file_info = self.get_file_start_indices(diff, list_of_files)
+        print(f'{file_info = }')
+
+        sep_dict = {}
+        for key, value in file_info.items():
+            start = value['lastDescribed'] + 1
+            stop = value['lastLine']
+            sep_dict[key] = diff.splitlines()[start:stop]
+        print(f'{sep_dict = }')
+        return sep_dict
+
+    def get_file_start_indices(self, diff, list_of_files):
+        file_info = {file_name: {} for file_name in list_of_files}
+        current_file = None
+
+        for i, line in enumerate(diff.splitlines()):
+            if '--- a' in line or '+++ b' in line:
+                current_file = [fn for fn in list_of_files if fn in line][0]
+                file_info[current_file]['firstDescribed'] = file_info[current_file].get('firstDescribed', i)
+                file_info[current_file]['lastDescribed'] = i
+            # elif re.search(r'(@@ -*\d+,\d* \+\d+,\d* @@)', line):
+            #     file_info[current_file]['firstLine'] = i
+
+        for i, key in enumerate(list(file_info.keys())[:-1]):
+            proceeding = list(file_info.keys())[i+1]
+            file_info[key]['proceedingFile'] = proceeding
+            file_info[key]['lastLine'] = file_info[proceeding]['firstDescribed'] - 1
+
+        file_info[list(file_info.keys())[-1]]['lastLine'] = len(diff.splitlines()) - 1
+
+        return file_info
 
 
-        # Now we have one element in the list for each file.
-        logging.info(f"{file_splits = }")
-
-        for i, file_split in enumerate(file_splits):
-            separated_snippets = self.clean_up_file_split(file_split)
-            buggy_list = []
-            patched_list = []
-            commit['parsedDiff'] = {}
-            for snippet in separated_snippets:
-                buggy, patched = self.separate_buggy_and_patched(snippet)
-                buggy_list.append(buggy)
-                patched_list.append(patched)
-            file_num = str('fileNumber'+str(i))
-            commit['parsedDiff'][file_num] = {}
-            commit['parsedDiff'][file_num]['buggyCode'] = buggy_list
-            commit['parsedDiff'][file_num]['patchedCode'] = patched_list
-
-            # TODO: Save diff directly to make sure it is working correctly
-
-            # commit['changedFiles'][file_name]['buggyCode'] = buggy_list
-            # commit['changedFiles'][file_name]['patchedCode'] = patched_list
+    def save_to_json(self, file_name):
+        """Save file to json format."""
+        with open(file_name, 'w') as f:
+            json.dump(self.data, f, indent=4)
 
     @staticmethod
     def read_file(file_name):
@@ -78,52 +116,12 @@ class Defects4jDiffParser(object):
             data = json.load(f)
         return data
 
-    @staticmethod
-    def separate_buggy_and_patched(file_split):
-        # Define empty strings for the code-snippets
-        buggy_code = ''
-        patched_code = ''
-
-        buggy_count = 0
-        patched_count = 0
-
-        # Iterate through each line of the diff, and assign the lines to the correct variable
-        for line in file_split.splitlines():
-            if line[0] == "-":
-                buggy_code += (line[1:] + "\n")
-                buggy_count += 1
-            elif line[0] == "+":
-                patched_code += (line[1:] + "\n")
-                patched_count += 1
-            else:
-                buggy_code += (line + "\n")
-                patched_code += (line + "\n")
-        return buggy_code, patched_code
-
-    def clean_up_file_split(self, file_split):
-        temp_list = re.split(self.re_sep_snippets, file_split)
-        separated_snippets = [snippet for i, snippet in enumerate(temp_list[2:]) if i % 2 == 0]
-        return separated_snippets
-
-    def save_to_json(self, file_name):
-        """Save file to json format."""
-        with open(file_name, 'w') as f:
-            json.dump(self.data, f, indent=4)
-
-
-def get_file_names_from_diff(diff):
-    pass
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-    string = f'(?<=org\{key}\n@@)(.*)'
-    r"(?<=org\{key}\n@@)(.*)"
-
     data_set = '../../data/defects4j-bugs.json'
     data_set1 = '../../data/sample.json'
     data_set2 = '../../data/sample2.json'
     parser = Defects4jDiffParser(data_set, remove_multiple_diffs=False)
     parser.parse_all_commits()
-    # print(f'{parser.data = }')
-    parser.save_to_json('../../output/test_parsed_diff.json')
-    # parser.save_to_json('../../output/test2.json')
+    parser.save_to_json('../../output/testExperimental2.json')
