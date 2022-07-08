@@ -32,21 +32,52 @@ class Defects4jDiffParser(object):
         [self.parse_commit(commit) for commit in self.data]
 
     def parse_commit(self, commit):
+        """
+        Retrieve a list of filenames, and use the filenames as keys to store the code that belongs to each file:
+        list_of_files = ['path/filename1', 'path/filename2]
+        sep_dict_files = {'path/filename1':['1st line of code in file 1', 2nd line of code in file 1]}
+        
+        for each file in the sep_dict_files list, we create a dict with with the buggy code and patched code
+        formatted like this:
+        sep_dict_snippets = {'buggyCode': [['firstLineBuggyCodeSnippet1', 'secondLineBuggyCodeSnippet1],
+                                            ['firstLineBuggyCodeSnippet2', 'secondLineBuggyCodeSnippet2]],
+                             'patchedCode': [['firstLineBuggyPatchedSnippet1', 'secondLinePatchedCodeSnippet1],
+                                            ['firstLinePatchedCodeSnippet2', 'secondLinePatchedCodeSnippet2]]
+                                            
+        With this dictionary, we can add the information to the following location:
+        commit['changedFiles]['fileName']['buggyCode or patchedCode']
+        
+        Parameters
+        ----------
+        commit dict symbolizing a single commit.
 
-        # For each commit I want to separate what happens in each file first.
+        Returns
+        -------   
+        None                                 
+        """
         list_of_files = list(commit['changedFiles'].keys())
         print(f"Got a list of {len(list_of_files)} filenames: {list_of_files}")
         sep_dict_files = self.sep_by_files(commit['diff'], list_of_files)
 
+        # Iterate through sep_dict_files: key = 'filename', value = ['lines of code']
         for key, value in sep_dict_files.items():
+            # Separate the lines into buggy or patched snippets
             sep_dict_snippets = self.sep_by_snippets(value)
+            # Add the parsed code to correct location, as described above in docstring.
             commit['changedFiles'][key]['buggyCode'] = sep_dict_snippets['buggyCode']
             commit['changedFiles'][key]['patchedCode'] = sep_dict_snippets['patchedCode']
 
-            #for line in value:
-            #     print(line)
-
     def sep_by_snippets(self, un_separated):
+        """
+
+        Parameters
+        ----------
+        un_separated
+
+        Returns
+        -------
+
+        """
         buggy = []
         patched = []
         current_snippet = -1
@@ -84,25 +115,19 @@ class Defects4jDiffParser(object):
 
     def get_file_start_indices(self, diff, list_of_files):
         file_info = {file_name: {} for file_name in list_of_files}
-        current_file = None
 
         for i, line in enumerate(diff.splitlines()):
             if '--- a' in line or '+++ b' in line:
                 current_file = [fn for fn in list_of_files if fn in line][0]
                 file_info[current_file]['firstDescribed'] = file_info[current_file].get('firstDescribed', i)
                 file_info[current_file]['lastDescribed'] = i
-            # elif re.search(r'(@@ -*\d+,\d* \+\d+,\d* @@)', line):
-            #     file_info[current_file]['firstLine'] = i
 
         for i, key in enumerate(list(file_info.keys())[:-1]):
             proceeding = list(file_info.keys())[i+1]
             file_info[key]['proceedingFile'] = proceeding
             file_info[key]['lastLine'] = file_info[proceeding]['firstDescribed'] - 1
-
         file_info[list(file_info.keys())[-1]]['lastLine'] = len(diff.splitlines()) - 1
-
         return file_info
-
 
     def save_to_json(self, file_name):
         """Save file to json format."""
@@ -122,6 +147,6 @@ if __name__ == '__main__':
     data_set = '../../data/defects4j-bugs.json'
     data_set1 = '../../data/sample.json'
     data_set2 = '../../data/sample2.json'
-    parser = Defects4jDiffParser(data_set, remove_multiple_diffs=False)
+    parser = Defects4jDiffParser(data_set2, remove_multiple_diffs=False)
     parser.parse_all_commits()
-    parser.save_to_json('../../output/testExperimental2.json')
+    parser.save_to_json('../../output/testExperimental3.json')
