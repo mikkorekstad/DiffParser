@@ -21,13 +21,9 @@ class Defects4jDiffParser(object):
         self.file_name = file_name
         self.remove_multiple_diffs = remove_multiple_diffs
         self.data = self.read_file(self.file_name)
-
-    @staticmethod
-    def read_file(file_name):
-        """Read the file from json format"""
-        with open(file_name, 'r') as f:
-            data = json.load(f)
-        return data
+        self.n_bugs = len(self.data)
+        # Log some info
+        logging.info(f"The data contains {self.n_bugs} bugs!")
 
     def parse_all_commits(self):
         """Parse all commits"""
@@ -44,11 +40,14 @@ class Defects4jDiffParser(object):
 
         # Split the from each file:
         file_splits = re.split(self.re_sep_files, commit['diff'])
-        file_names = re.findall('(?<=-{3} a/src/main/java/)(.*)', commit['diff'])
-        print(f'{file_names = }')
+        file_splits = [file for file in file_splits if file]
+
+        # file_names = get_file_names_from_diff(commit['diff'])
+        # file_names = re.findall('(?<=-{3} a/src/main/java/)(.*)', commit['diff'])
+        # print(f'{file_names = }')
 
         # Remove empty strings from list of file splits.
-        file_splits = [file for file in file_splits if file]
+
 
         # Now we have one element in the list for each file.
         logging.info(f"{file_splits = }")
@@ -71,6 +70,13 @@ class Defects4jDiffParser(object):
 
             # commit['changedFiles'][file_name]['buggyCode'] = buggy_list
             # commit['changedFiles'][file_name]['patchedCode'] = patched_list
+
+    @staticmethod
+    def read_file(file_name):
+        """Read the file from json format"""
+        with open(file_name, 'r') as f:
+            data = json.load(f)
+        return data
 
     @staticmethod
     def separate_buggy_and_patched(file_split):
@@ -105,14 +111,19 @@ class Defects4jDiffParser(object):
             json.dump(self.data, f, indent=4)
 
 
+def get_file_names_from_diff(diff):
+    pass
+
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+    string = f'(?<=org\{key}\n@@)(.*)'
+    r"(?<=org\{key}\n@@)(.*)"
 
     data_set = '../../data/defects4j-bugs.json'
     data_set1 = '../../data/sample.json'
     data_set2 = '../../data/sample2.json'
     parser = Defects4jDiffParser(data_set, remove_multiple_diffs=False)
     parser.parse_all_commits()
-    print(f'{parser.data = }')
+    # print(f'{parser.data = }')
     parser.save_to_json('../../output/test_parsed_diff.json')
     # parser.save_to_json('../../output/test2.json')
