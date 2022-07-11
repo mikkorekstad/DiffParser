@@ -236,6 +236,7 @@ class Defects4jDiffParser(object):
         return data
 
     def print_statistics(self):
+        """Print out some relevant statistics for the dataset."""
         num_files = []
         num_snippets = {}
         n_files_dict = {}
@@ -270,6 +271,7 @@ class Defects4jDiffParser(object):
 
 
 if __name__ == '__main__':
+    """Example parser."""
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     data_set = '../../data/defects4j-bugs.json'
     data_set1 = '../../data/sample.json'
@@ -277,5 +279,4 @@ if __name__ == '__main__':
     parser = Defects4jDiffParser(data_set, remove_multiple_diffs=False)
     parser.parse_all_commits()
     parser.save_to_json('../../output/testExperimental.json')
-    # print(f"{parser.statistics = }")
     parser.print_statistics()

@@ -1,6 +1,5 @@
-
 import json
-from numpy import cumsum
+from numpy import array
 from sklearn.model_selection import train_test_split
 
 
@@ -54,6 +53,10 @@ class JsonSplitter(object):
 
             buggy_lst.append(buggy)
             patched_lst.append(patched)
+
+        # Convert to numpy arrays
+        buggy_lst = array(buggy_lst, dtype=object)
+        patched_lst = array(patched_lst, dtype=object)
 
         # Create filenames
         buggy_names = [f'{output_name}_src_{extension}.txt' for extension in ['train', 'val', 'test']]
