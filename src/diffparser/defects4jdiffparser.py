@@ -118,15 +118,22 @@ class Defects4jDiffParser(object):
         for i, line in enumerate(un_separated):
             # Check if the line is the beginning of a new code snippet
             if re.search(re_line_split, line):
-                # Split the line
-                line_split = re.split(re_line_split, line)
-                # Store the last value of the split, that's where we find the code snippet.
-                line = [element for element in line_split if element][-1]
                 # Increase the snippet counter
                 current_snippet += 1
                 # Create new lists for the current iteration
                 buggy.append([])
                 patched.append([])
+
+                # Split the line
+                line_split = re.split(re_line_split, line)
+                # Store the last value of the split, that's where we find the code snippet.
+                line = [element for element in line_split if element][-1]
+                if re.search(re_line_split, line):
+                    print(f'Skipping this one: {line = }')
+                    print(f'Line split was: {line_split}')
+                    continue
+
+
 
             # Add the code to the correct snippet
             if line[0] == '-':
