@@ -11,6 +11,10 @@ class JsonSplitter(object):
         self.data = self.read_file(file_name)
 
     def test_train_val_split(self, split_size, output_name, remove_multi_snippets_per_file=False, remove_multi_file=False):
+
+        buggy_lst = []
+        patched_lst = []
+
         for commit in self.data:
             # If specified, remove commits with multi-file changes
             num_files = len(commit['changedFiles'])
@@ -31,21 +35,25 @@ class JsonSplitter(object):
             # Iterate over the files and then snippets of code
             for file in commit['changedFiles'].values():
                 for buggySnippet, patchedSnippet in zip(file['buggyCode'], file['patchedCode']):
+                    print(f'{buggySnippet = }')
                     buggy.append(buggySnippet)
                     patched.append(patchedSnippet)
 
-            # Separate data
-            buggy_splits = self.percentage_split(buggy, split_size)
-            patched_splits = self.percentage_split(patched, split_size)
+            buggy_lst.append(buggy)
+            patched_lst.append(patched)
 
-            # Create filenames
-            buggy_names = [f'{output_name}_src_{extension}.txt' for extension in ['train', 'val', 'test']]
-            patched_names = [f'{output_name}_trgt_{extension}.txt' for extension in ['train', 'val', 'test']]
+        # Separate data
+        # buggy_splits = self.percentage_split(buggy_lst, split_size)
+        # patched_splits = self.percentage_split(patched, split_size)
 
-            # Save to text file
-            # [self.save_to_txt(split, file_name) for split, file_name in zip(buggy_splits, buggy_names)]
-            print(buggy)
-            self.save_to_txt(buggy, buggy_names[0])
+        # Create filenames
+        buggy_names = [f'{output_name}_src_{extension}.txt' for extension in ['train', 'val', 'test']]
+        patched_names = [f'{output_name}_trgt_{extension}.txt' for extension in ['train', 'val', 'test']]
+
+        # Save to text file
+        # [self.save_to_txt(split, file_name) for split, file_name in zip(buggy_splits, buggy_names)]
+        # print(buggy)
+        self.save_to_txt(buggy_lst, buggy_names[0])
 
     @staticmethod
     def percentage_split(seq, percentages):
@@ -58,11 +66,10 @@ class JsonSplitter(object):
     @staticmethod
     def save_to_txt(split, file_name):
         with open(file_name, 'w') as fp:
-            for entry in split:
-                fp.write("%s\n" % entry)
-
-
-
+            for element in split:
+                for line in element:
+                    input_line = ''.join(f'{pair}' for pair in line)
+                    fp.writelines(input_line + '\n')
 
 
     @staticmethod
