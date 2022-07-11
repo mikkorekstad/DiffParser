@@ -68,9 +68,8 @@ class JsonSplitter(object):
         with open(file_name, 'w') as fp:
             for element in split:
                 for line in element:
-                    input_line = ''.join(f'{pair}' for pair in line)
+                    input_line = ''.join(pair for pair in line)
                     fp.writelines(input_line + '\n')
-
 
     @staticmethod
     def read_file(file_name):
@@ -82,4 +81,4 @@ class JsonSplitter(object):
 
 if __name__ == '__main__':
     splitter = JsonSplitter('../../output/testExperimental.json')
-    splitter.test_train_val_split(split_size=(0.8, 0.1, 0.1), output_name='../../output/MYTEST')
+    splitter.test_train_val_split(split_size=(0.8, 0.1, 0.1), output_name='../../output/MYTEST', remove_multi_file=True, remove_multi_snippets_per_file=True)

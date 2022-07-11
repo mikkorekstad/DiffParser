@@ -112,13 +112,14 @@ class Defects4jDiffParser(object):
         patched = []
         current_snippet = -1
         sep_dict = {'buggyCode': buggy, 'patchedCode': patched}
+        re_line_split = r'(@+ -*\d+,\d* \+\d+,\d* @+)'
 
         # Iterate over each line
         for i, line in enumerate(un_separated):
             # Check if the line is the beginning of a new code snippet
-            if re.search(r'(@@ -*\d+,\d* \+\d+,\d* @@)', line):
+            if re.search(re_line_split, line):
                 # Split the line
-                line_split = re.split(r'(@@ -*\d+,\d* \+\d+,\d* @@)', line)
+                line_split = re.split(re_line_split, line)
                 # Store the last value of the split, that's where we find the code snippet.
                 line = [element for element in line_split if element][-1]
                 # Increase the snippet counter
@@ -142,7 +143,6 @@ class Defects4jDiffParser(object):
 
     def sep_by_files(self, diff, list_of_files):
         """
-
         This function finds the lines that includes the filenames, and saves the information about their locations
         in the diff.
 
