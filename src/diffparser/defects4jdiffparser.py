@@ -59,7 +59,6 @@ class Defects4jDiffParser(object):
         """
         # Create list of filenames
         list_of_files = list(commit['changedFiles'].keys())
-        print(f"Got a list of {len(list_of_files)} filenames: {list_of_files}")
         # Add entry in statistics dict
         self.statistics[commit['revisionId']] = {}
 
@@ -75,48 +74,61 @@ class Defects4jDiffParser(object):
             commit['changedFiles'][key]['patchedCode'] = sep_dict_snippets['patchedCode']
 
             # Add some stats
-
             stats = {'numBuggySnippets': len(sep_dict_snippets['buggyCode']),
                      'numPatchedSnippets': len(sep_dict_snippets['patchedCode'])}
+            self.statistics[commit['revisionId']][key] = stats
 
-            self.statistics[commit['revisionId']][key] = stats  # specific_stats
-
-    def sep_by_snippets(self, un_separated):
+    @staticmethod
+    def sep_by_snippets(un_separated):
         """
+        Takes in an unfiltered list of code-lines like this: [@@ -10,5 +10,7@@ line1, line2, ...].
+        Will filter out the less interesting part of the first line of the code snippet, and separate the code from
+        before the commit and after, based on the prefix in the beginning of each line.
 
         Parameters
         ----------
-        un_separated
+        un_separated list containing lines of code
 
         Returns
         -------
-
+        sep_dict Dictionary containing separated code in this format: {buggyCode: [buggyLine1, buggyLine2],
+                                                                       patchedCode: [patchedLine1, patchedLine2]}
         """
+        # Define some variables:
         buggy = []
         patched = []
         current_snippet = -1
         sep_dict = {'buggyCode': buggy, 'patchedCode': patched}
+
+        # Iterate over each line
         for i, line in enumerate(un_separated):
+            # Check if the line is the beginning of a new code snippet
             if re.search(r'(@@ -*\d+,\d* \+\d+,\d* @@)', line):
+                # Split the line
                 line_split = re.split(r'(@@ -*\d+,\d* \+\d+,\d* @@)', line)
-                print(f'{[element for element in line_split if element] =}')
+                # Store the last value of the split, that's where we find the code snippet.
                 line = [element for element in line_split if element][-1]
+                # Increase the snippet counter
                 current_snippet += 1
+                # Create new lists for the current iteration
                 buggy.append([])
                 patched.append([])
 
+            # Add the code to the correct snippet
             if line[0] == '-':
                 buggy[current_snippet].append(" " + line[1:])
             elif line[0] == '+':
                 patched[current_snippet].append(" " + line[1:])
             else:
+                # If the code starts with neither + / -, the code belongs to both snippets
                 buggy[current_snippet].append(" " + line[1:])
                 patched[current_snippet].append(" " + line[1:])
+
+        # Return the separated code
         return sep_dict
 
     def sep_by_files(self, diff, list_of_files):
         file_info = self.get_file_start_indices(diff, list_of_files)
-        # print(f'{file_info = }')
 
         sep_dict = {}
         for key, value in file_info.items():
@@ -126,8 +138,8 @@ class Defects4jDiffParser(object):
         # print(f'{sep_dict = }')
         return sep_dict
 
-    def get_file_start_indices(self, diff, list_of_files):
-
+    @staticmethod
+    def get_file_start_indices(diff, list_of_files):
         # Create a dict with filenames as entries.
         file_info = {file_name: {} for file_name in list_of_files}
 
