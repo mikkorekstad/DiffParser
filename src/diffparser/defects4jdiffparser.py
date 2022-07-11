@@ -16,7 +16,14 @@ class Defects4jDiffParser(object):
     re_sep_snippets = r'@@ -*(\d+,\d* \+\d+,\d* @@) '
 
     def __init__(self, file_name, remove_multiple_diffs=True):
-        """Constructor."""
+        """
+        Construct a Defects4J JSON file parser. This is an object that will be able to extract information about the
+        diffs in the Defects4J dataset into a structured output of the before / after code snippets.
+        Parameters
+        ----------
+        file_name str path/name of JSON-file to be parsed
+        remove_multiple_diffs boolean value which indicated how to deal with multiple diff commits.
+        """
 
         # Initial values
         self.file_name = file_name
@@ -85,6 +92,12 @@ class Defects4jDiffParser(object):
         Will filter out the less interesting part of the first line of the code snippet, and separate the code from
         before the commit and after, based on the prefix in the beginning of each line.
 
+        This function use the @@ -10,5 +10,7@@ part to distinguish between different code-snippets.
+        We have information about what lines the alterations occur on: -digit indicated at which line the removal
+        starts, and +digit indicates where the adding starts. The number after the comma indicates how many lines is
+        described in the diff. Because this structure occurs between each code-snippet, we use a regex to find these and
+        split the lines between them, before separating the code as explained above.
+
         Parameters
         ----------
         un_separated list containing lines of code
@@ -128,18 +141,54 @@ class Defects4jDiffParser(object):
         return sep_dict
 
     def sep_by_files(self, diff, list_of_files):
-        file_info = self.get_file_start_indices(diff, list_of_files)
+        """
 
+        This function finds the lines that includes the filenames, and saves the information about their locations
+        in the diff.
+
+        Parameters
+        ----------
+        diff str formatted like this: '--- a/path/filename1 +++ b/path/filename1 @@ -1,10 +1,12 @@ func1 ---a/path2...'
+        list_of_files: list of filenames
+
+        Returns
+        -------
+        sep_dict: dict with format: {'path/filename': ['@@ -int,int +int,int @@ codeLine1', 'codeLine2']}
+        """
+        # Get the information about where the files start and stop
+        file_info = self.get_file_start_indices(diff, list_of_files)
+        # Create empty dictionary
         sep_dict = {}
+        # Iterate over the information in the file_info dict
         for key, value in file_info.items():
+            # Describe the start and stop lines
             start = value['lastDescribed'] + 1
             stop = value['lastLine']
+            # Add the split diff lines to the sep_dict dictionary
             sep_dict[key] = diff.splitlines()[start:stop]
-        # print(f'{sep_dict = }')
+        # Return the new sep_dict dictionary containing the separated diffs.
         return sep_dict
 
     @staticmethod
     def get_file_start_indices(diff, list_of_files):
+        """
+        In the Defects4J dataset we get diffs that contain a lot of information:
+        first information about whether lines have been added or subtracted to a certain file:
+        --- a/path/filenameThatHasRemovedLines or +++ b/path/filenameThatHasAddedLines
+
+        This function creates a dictionary with filenames as keys, and the information about where each file starts,
+        and stops as the values (in a nested dictionary). This information will later be used to separate the diff
+        between the files.
+
+        Parameters
+        ----------
+        diff: string, the diff is a str with all info about the changes between the previous and next state after commit
+        list_of_files: list of filenames
+
+        Returns
+        -------
+        file_info dict with format: {'path/filename': {'firstDescribed': int, 'lastDescribed': int, 'lastLine': int}}
+        """
         # Create a dict with filenames as entries.
         file_info = {file_name: {} for file_name in list_of_files}
 
