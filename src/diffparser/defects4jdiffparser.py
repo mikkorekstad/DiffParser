@@ -5,6 +5,7 @@ Defects4j-bugs parser.
 import json
 import logging
 import re
+import numpy as np
 
 
 class Defects4jDiffParser(object):
@@ -115,14 +116,14 @@ class Defects4jDiffParser(object):
 
     def sep_by_files(self, diff, list_of_files):
         file_info = self.get_file_start_indices(diff, list_of_files)
-        print(f'{file_info = }')
+        # print(f'{file_info = }')
 
         sep_dict = {}
         for key, value in file_info.items():
             start = value['lastDescribed'] + 1
             stop = value['lastLine']
             sep_dict[key] = diff.splitlines()[start:stop]
-        print(f'{sep_dict = }')
+        # print(f'{sep_dict = }')
         return sep_dict
 
     def get_file_start_indices(self, diff, list_of_files):
@@ -166,12 +167,47 @@ class Defects4jDiffParser(object):
             data = json.load(f)
         return data
 
+    def print_statistics(self):
+        num_files = []
+        num_snippets = {}
+        n_files_dict = {}
+        # num_files.append(stats)
+        for revisionID, dct in self.statistics.items():
+            n_files = len(dct)
+            num_files.append(n_files)
+            _hash = f'{n_files} files'
+            old_count = n_files_dict.get(_hash, 0)
+            n_files_dict[_hash] = old_count + 1
+            for file_name, stats in dct.items():
+                # Save values for the snippet counts
+                num_buggy_snippets = stats['numBuggySnippets']
+                num_patched_snippets = stats['numPatchedSnippets']
+
+                # Append value to the num_snippets dictionary
+                snippet_dict = num_snippets.get(_hash, {})
+                _hash2 = f'{num_buggy_snippets} snippets'
+                old_count = snippet_dict.get(_hash2, 0)
+                snippet_dict[_hash2] = old_count + 1
+                num_snippets[_hash] = snippet_dict
+
+                # Do a quick check that we don't have dis-proportioned amount of snippets
+                if num_buggy_snippets != num_patched_snippets:
+                    raise ValueError("We should always have the same amount of src snippets as targets!")
+
+        # Print out the statistics
+        print(f"We have {len(num_files)} bugs.")
+        print(f"Average number of files per bug: {np.average(num_files)}.")
+        print(f"Overview of file counts: {n_files_dict}")
+        print(f"Overview of snippet counts: {num_snippets}")
+
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     data_set = '../../data/defects4j-bugs.json'
     data_set1 = '../../data/sample.json'
     data_set2 = '../../data/sample2.json'
-    parser = Defects4jDiffParser(data_set2, remove_multiple_diffs=False)
+    parser = Defects4jDiffParser(data_set, remove_multiple_diffs=False)
     parser.parse_all_commits()
-    parser.save_to_json('../../output/testExperimental3.json')
+    parser.save_to_json('../../output/testExperimental.json')
+    # print(f"{parser.statistics = }")
+    parser.print_statistics()
