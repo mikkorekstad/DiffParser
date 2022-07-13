@@ -147,7 +147,6 @@ class Defects4jDiffParser(object):
                 # Store the information about where we found this line
                 file_info[current_file]['firstDescribed'] = file_info[current_file].get('firstDescribed', i)
                 file_info[current_file]['lastDescribed'] = i  # TODO: Change name for this entry
-
         return parse_diff_string.define_file_indices(file_info, diff)
 
     def save_to_json(self, file_name):

@@ -2,6 +2,26 @@ import re
 
 
 def sep_by_snippets(un_separated):
+    """
+    Takes in an unfiltered list of code-lines like this: [@@ -10,5 +10,7@@ line1, line2, ...].
+    Will filter out the less interesting part of the first line of the code snippet, and separate the code from
+    before the commit and after, based on the prefix in the beginning of each line.
+
+    This function use the @@ -10,5 +10,7@@ part to distinguish between different code-snippets.
+    We have information about what lines the alterations occur on: -digit indicated at which line the removal
+    starts, and +digit indicates where the adding starts. The number after the comma indicates how many lines is
+    described in the diff. Because this structure occurs between each code-snippet, we use a regex to find these and
+    split the lines between them, before separating the code as explained above.
+
+    Parameters
+    ----------
+    un_separated list containing lines of code
+
+    Returns
+    -------
+    sep_dict Dictionary containing separated code in this format: {buggyCode: [buggyLine1, buggyLine2],
+                                                                   patchedCode: [patchedLine1, patchedLine2]}
+    """
     # Define some variables:
     buggy = []
     patched = []
@@ -24,8 +44,8 @@ def sep_by_snippets(un_separated):
             # Store the last value of the split, that's where we find the code snippet.
             line = [element for element in line_split if element][-1]
             if re.search(re_line_split, line):
-                print(f'Skipping this one: {line = }')
-                print(f'Line split was: {line_split}')
+                # print(f'Skipping this one: {line = }')
+                # print(f'Line split was: {line_split}')
                 continue
 
         # Add the code to the correct snippet
