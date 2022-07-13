@@ -86,67 +86,6 @@ class Defects4jDiffParser(object):
                      'numPatchedSnippets': len(sep_dict_snippets['patchedCode'])}
             self.statistics[commit['revisionId']][key] = stats
 
-    @staticmethod
-    def sep_by_snippets(un_separated):
-        """
-        Takes in an unfiltered list of code-lines like this: [@@ -10,5 +10,7@@ line1, line2, ...].
-        Will filter out the less interesting part of the first line of the code snippet, and separate the code from
-        before the commit and after, based on the prefix in the beginning of each line.
-
-        This function use the @@ -10,5 +10,7@@ part to distinguish between different code-snippets.
-        We have information about what lines the alterations occur on: -digit indicated at which line the removal
-        starts, and +digit indicates where the adding starts. The number after the comma indicates how many lines is
-        described in the diff. Because this structure occurs between each code-snippet, we use a regex to find these and
-        split the lines between them, before separating the code as explained above.
-
-        Parameters
-        ----------
-        un_separated list containing lines of code
-
-        Returns
-        -------
-        sep_dict Dictionary containing separated code in this format: {buggyCode: [buggyLine1, buggyLine2],
-                                                                       patchedCode: [patchedLine1, patchedLine2]}
-        """
-        # Define some variables:
-        buggy = []
-        patched = []
-        current_snippet = -1
-        sep_dict = {'buggyCode': buggy, 'patchedCode': patched}
-        re_line_split = r'(@+ -*\d+,\d* \+\d+,\d* @+)'
-
-        # Iterate over each line
-        for i, line in enumerate(un_separated):
-            # Check if the line is the beginning of a new code snippet
-            if re.search(re_line_split, line):
-                # Increase the snippet counter
-                current_snippet += 1
-                # Create new lists for the current iteration
-                buggy.append([])
-                patched.append([])
-
-                # Split the line
-                line_split = re.split(re_line_split, line)
-                # Store the last value of the split, that's where we find the code snippet.
-                line = [element for element in line_split if element][-1]
-                if re.search(re_line_split, line):
-                    print(f'Skipping this one: {line = }')
-                    print(f'Line split was: {line_split}')
-                    continue
-
-            # Add the code to the correct snippet
-            if line[0] == '-':
-                buggy[current_snippet].append(" " + line[1:])
-            elif line[0] == '+':
-                patched[current_snippet].append(" " + line[1:])
-            else:
-                # If the code starts with neither + / -, the code belongs to both snippets
-                buggy[current_snippet].append(" " + line[1:])
-                patched[current_snippet].append(" " + line[1:])
-
-        # Return the separated code
-        return sep_dict
-
     def sep_by_files(self, diff, list_of_files):
         """
         This function finds the lines that includes the filenames, and saves the information about their locations
@@ -202,7 +141,6 @@ class Defects4jDiffParser(object):
         for i, line in enumerate(diff.splitlines()):
             # Check if the line is describing subtraction or addition in a file
             if '--- a' in line or '+++ b' in line:
-                print(f'{line = }')
                 # Select the current file from the list_of_files, based on the characters of the line.
                 current_file = [fn for fn in list_of_files if fn in line][0]  # TODO: Check if any commits have same names for files
 
@@ -210,20 +148,6 @@ class Defects4jDiffParser(object):
                 file_info[current_file]['firstDescribed'] = file_info[current_file].get('firstDescribed', i)
                 file_info[current_file]['lastDescribed'] = i  # TODO: Change name for this entry
 
-        """
-        # Iterate over all except the last entries in the file_info dict
-        for i, key in enumerate(list(file_info.keys())[:-1]):
-            # Store information about what the next file is
-            proceeding = list(file_info.keys())[i+1]
-            file_info[key]['proceedingFile'] = proceeding
-            # With information about the next line, we can save the index of this snippets final line.
-            file_info[key]['lastLine'] = file_info[proceeding]['firstDescribed'] - 1
-        # We can also save information about the index of the last line for the final snippet:
-        file_info[list(file_info.keys())[-1]]['lastLine'] = len(diff.splitlines()) - 1
-
-        # Return the information gathered
-        return file_info
-        """
         return parse_diff_string.define_file_indices(file_info, diff)
 
     def save_to_json(self, file_name):
@@ -281,5 +205,5 @@ if __name__ == '__main__':
     data_set2 = '../../data/sample2.json'
     parser = Defects4jDiffParser(data_set, remove_multiple_diffs=False)
     parser.parse_all_commits()
-    parser.save_to_json('../../output/testExperimental.json')
+    parser.save_to_json('../../output/fully_parsed.json')
     parser.print_statistics()
