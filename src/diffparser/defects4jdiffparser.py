@@ -6,6 +6,7 @@ import json
 import logging
 import re
 import numpy as np
+import parse_diff_string
 
 
 class Defects4jDiffParser(object):
@@ -75,7 +76,7 @@ class Defects4jDiffParser(object):
         # Iterate through sep_dict_files: key = 'filename', value = ['lines of code']
         for key, value in sep_dict_files.items():
             # Separate the lines into buggy or patched snippets
-            sep_dict_snippets = self.sep_by_snippets(value)
+            sep_dict_snippets = parse_diff_string.sep_by_snippets(value)
             # Add the parsed code to correct location, as described above in docstring.
             commit['changedFiles'][key]['buggyCode'] = sep_dict_snippets['buggyCode']
             commit['changedFiles'][key]['patchedCode'] = sep_dict_snippets['patchedCode']
@@ -132,8 +133,6 @@ class Defects4jDiffParser(object):
                     print(f'Skipping this one: {line = }')
                     print(f'Line split was: {line_split}')
                     continue
-
-
 
             # Add the code to the correct snippet
             if line[0] == '-':
@@ -203,13 +202,15 @@ class Defects4jDiffParser(object):
         for i, line in enumerate(diff.splitlines()):
             # Check if the line is describing subtraction or addition in a file
             if '--- a' in line or '+++ b' in line:
+                print(f'{line = }')
                 # Select the current file from the list_of_files, based on the characters of the line.
-                current_file = [fn for fn in list_of_files if fn in line][0]
+                current_file = [fn for fn in list_of_files if fn in line][0]  # TODO: Check if any commits have same names for files
 
                 # Store the information about where we found this line
                 file_info[current_file]['firstDescribed'] = file_info[current_file].get('firstDescribed', i)
-                file_info[current_file]['lastDescribed'] = i
+                file_info[current_file]['lastDescribed'] = i  # TODO: Change name for this entry
 
+        """
         # Iterate over all except the last entries in the file_info dict
         for i, key in enumerate(list(file_info.keys())[:-1]):
             # Store information about what the next file is
@@ -222,6 +223,8 @@ class Defects4jDiffParser(object):
 
         # Return the information gathered
         return file_info
+        """
+        return parse_diff_string.define_file_indices(file_info, diff)
 
     def save_to_json(self, file_name):
         """Save file to json format."""

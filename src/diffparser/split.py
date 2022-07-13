@@ -59,8 +59,8 @@ class JsonSplitter(object):
         patched_lst = array(patched_lst, dtype=object)
 
         # Create filenames
-        buggy_names = [f'{output_name}_src_{extension}.txt' for extension in ['train', 'val', 'test']]
-        patched_names = [f'{output_name}_tgt_{extension}.txt' for extension in ['train', 'val', 'test']]
+        buggy_names = [f'{output_name}src-{extension}.txt' for extension in ['train', 'val', 'test']]
+        patched_names = [f'{output_name}tgt-{extension}.txt' for extension in ['train', 'val', 'test']]
 
         # Create splits
         train_size, val_size, test_size = split_size

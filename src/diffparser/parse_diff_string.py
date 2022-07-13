@@ -60,7 +60,7 @@ def sep_by_files(diff):
 
 def get_file_start_indices(diff):
     # Create a dict with filenames as entries.
-    file_info = {} # {file_name: {} for file_name in list_of_files}
+    file_info = {}  # {file_name: {} for file_name in list_of_files}
 
     # Iterate over each line in the diff
     for i, line in enumerate(diff.splitlines()):
@@ -76,6 +76,10 @@ def get_file_start_indices(diff):
             file_info[current_file]['firstDescribed'] = file_info[current_file].get('firstDescribed', i)
             file_info[current_file]['lastDescribed'] = i
 
+    return define_file_indices(file_info, diff)
+
+
+def define_file_indices(file_info, diff):
     # Iterate over all except the last entries in the file_info dict
     for i, key in enumerate(list(file_info.keys())[:-1]):
         # Store information about what the next file is
