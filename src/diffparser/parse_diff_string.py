@@ -50,13 +50,13 @@ def sep_by_snippets(un_separated):
 
         # Add the code to the correct snippet
         if line[0] == '-':
-            buggy[current_snippet].append(" " + line[1:])
+            buggy[current_snippet].append(' ' + line[1:])
         elif line[0] == '+':
-            patched[current_snippet].append(" " + line[1:])
+            patched[current_snippet].append(' ' + line[1:])
         else:
             # If the code starts with neither + / -, the code belongs to both snippets
-            buggy[current_snippet].append(" " + line[1:])
-            patched[current_snippet].append(" " + line[1:])
+            buggy[current_snippet].append(line)
+            patched[current_snippet].append(line)
 
     # Return the separated code
     return sep_dict
