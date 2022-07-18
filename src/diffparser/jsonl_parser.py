@@ -1,5 +1,5 @@
 import json
-import parse_diff_string
+from . import parse_diff_string
 
 
 def read_jsonl(file_name):
