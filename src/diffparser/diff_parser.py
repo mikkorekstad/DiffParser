@@ -58,32 +58,6 @@ def separate_bug(unstructured_diff):
         logging.debug(f"Handling a bug with multiple code snippets altered.")
 
     print(f'{len(diff_locations) = }')
-
-    buggy_codes = []
-    patched_codes = []
-
-
-
-
-
-
-
-    # if validate_diff_split(unstructured_diff):  # TODO: Change to a function for validation of diff later
-    # print(f'{diff_locations = }')
-    #logging.debug("New file")
-    #change_loc = get_loc(diff_locations[1])
-    #buggy, patched = filter_diff(diff_locations[2], change_loc)
-
-    #print("Here comes the unparsed code diff: ")
-    # print(diff_locations[2][-10:])
-
-    #print("Here comes the buggy code: ")
-    #print(buggy[-10:])
-    # print("FHAKSHF")
-    #print(buggy)
-    # '694,14 +694,6 @@ ',
-    #print("Here comes the patched code: ")
-    #print(patched)
     return change_loc, buggy, patched
 
 
@@ -110,8 +84,8 @@ def filter_diff(diff, loc_dict):
             patched_code += (line[1:] + "\n")
             patched_count += 1
         else:
-            buggy_code += (line + "\n")
-            patched_code += (line + "\n")
+            buggy_code += (line[1:] + "\n")
+            patched_code += (line[1:] + "\n")
             # buggy_count += 1
             # patched_count += 1
 

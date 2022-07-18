@@ -6,15 +6,11 @@ import json
 import logging
 import re
 import numpy as np
-import parse_diff_string
+from . import parse_diff_string
 
 
 class Defects4jDiffParser(object):
     """Class for parsing defects4j bugs."""
-
-    re_sep_files = r'-{3} a\/.*?\.[\w:]+\n\+{3} b\/.*?\.[\w:]+\n'
-    re_sep_loc = r'@@ -*(\d+,\d* \+\d+,\d* @@) '
-    re_sep_snippets = r'@@ -*(\d+,\d* \+\d+,\d* @@) '
 
     def __init__(self, file_name, remove_multiple_diffs=True):
         """
@@ -142,11 +138,11 @@ class Defects4jDiffParser(object):
             # Check if the line is describing subtraction or addition in a file
             if '--- a' in line or '+++ b' in line:
                 # Select the current file from the list_of_files, based on the characters of the line.
-                current_file = [fn for fn in list_of_files if fn in line][0]  # TODO: Check if any commits have same names for files
+                current_file = [fn for fn in list_of_files if fn in line][0]
 
                 # Store the information about where we found this line
                 file_info[current_file]['firstDescribed'] = file_info[current_file].get('firstDescribed', i)
-                file_info[current_file]['lastDescribed'] = i  # TODO: Change name for this entry
+                file_info[current_file]['lastDescribed'] = i
         return parse_diff_string.define_file_indices(file_info, diff)
 
     def save_to_json(self, file_name):
@@ -199,10 +195,8 @@ class Defects4jDiffParser(object):
 if __name__ == '__main__':
     """Example parser."""
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-    data_set = '../../data/defects4j-bugs.json'
-    data_set1 = '../../data/sample.json'
-    data_set2 = '../../data/sample2.json'
+    data_set = '../../data/pypi-bugs/pypi-bugs.jsonl'
     parser = Defects4jDiffParser(data_set, remove_multiple_diffs=False)
     parser.parse_all_commits()
-    parser.save_to_json('../../output/fully_parsed.json')
+    parser.save_to_json('../../output/python_parsed.json')
     parser.print_statistics()

@@ -17,7 +17,7 @@ def parse_jsonl(file_name):
     for dct in data:
         diff = dct['diff']
         separated_dif = parse_diff_string.sep_by_snippets(diff.splitlines())
-        old_list = ''.join(separated_dif['buggyCode'][0]) # ['\n'.join(snippet) for snippet in separated_dif['buggyCode'][0]]
+        old_list = ''.join(separated_dif['buggyCode'][0])
         old.append(old_list)
         new.append(''.join(separated_dif['patchedCode'][0]))
     return old, new

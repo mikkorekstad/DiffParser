@@ -1,4 +1,4 @@
-from diffparser.defects4jdiffparser import Defects4jDiffParser
+from diffparser.defects4jdiffparserOUTDATED import Defects4jDiffParser
 import pytest
 import json
 from functools import reduce

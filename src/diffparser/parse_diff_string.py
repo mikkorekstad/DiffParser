@@ -127,9 +127,6 @@ def parse_diff(diff):
         parsed_dict[key]['buggyCode'] = sep_dict_snippets['buggyCode']
         parsed_dict[key]['patchedCode'] = sep_dict_snippets['patchedCode']
 
-    #for key, val in parsed_dict.items():
-    #    print(f'filename: {key} with code: {val}')
-
     return parsed_dict
 
 
