@@ -6,7 +6,7 @@ def parse_diff(diff, path_included):
     return separate_diff.separate_diff(diff, path_included)
 
 
-def parse_list_of_commits(commits, path_included, diff_key='diff'):  # TODO: Specify in docs what commit is
+def parse_list_of_commits(commits, path_included, diff_key='diff', changed_key='changedFiles'):  # TODO: Specify in docs what commit is
 
     if not path_included:
         for commit in commits:
@@ -17,11 +17,11 @@ def parse_list_of_commits(commits, path_included, diff_key='diff'):  # TODO: Spe
     if path_included:
         for commit in commits:
             parsed_commit = separate_diff.separate_diff(commit[diff_key], path_included)
-            changed_files = list(commit['changedFiles'].keys())
+            changed_files = list(commit[changed_key].keys())
             for key, value in parsed_commit.items():
                 commit_key = [file_name for file_name in changed_files if file_name in key][0]
-                commit['changedFiles'][commit_key]['oldCode'] = value['oldCode']
-                commit['changedFiles'][commit_key]['newCode'] = value['newCode']
+                commit[changed_key][commit_key]['oldCode'] = value['oldCode']
+                commit[changed_key][commit_key]['newCode'] = value['newCode']
     return commits
 
 
