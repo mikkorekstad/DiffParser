@@ -3,9 +3,9 @@ import re
 
 def sep_by_snippets(un_separated):
     """
-    Takes in an unfiltered list of code-lines like this: [@@ -10,5 +10,7@@ line1, line2, ...].
-    Will filter out the less interesting part of the first line of the code snippet, and separate the code from
-    before the commit and after, based on the prefix in the beginning of each line.
+    Takes in an unfiltered list of code-lines like this: [@@ -10,5 +10,7@@ line1, line2, ...], and returns it in a
+    dictionary formatted like this: {'oldCode': [oldLine1, oldLine2], 'newCode': [newLine1, newLine2]}.
+
 
     This function use the @@ -10,5 +10,7@@ part to distinguish between different code-snippets.
     We have information about what lines the alterations occur on: -digit indicated at which line the removal
@@ -15,12 +15,13 @@ def sep_by_snippets(un_separated):
 
     Parameters
     ----------
-    un_separated list containing lines of code
+    un_separated : list
+        A list containing lines of code.
 
     Returns
     -------
-    sep_dict Dictionary containing separated code in this format: {oldCode: [oldLine1, oldLine2],
-                                                                   newCode: [newLine1, newLine2]}
+    sep_dict : dict
+        A dictionary containing separated code.
     """
     # Define some variables:
     old_code = []
