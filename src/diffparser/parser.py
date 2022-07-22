@@ -35,18 +35,18 @@ def parse_list_of_commits(commits, path_included, diff_key='diff', changed_key='
 
     Parameters
     ----------
-    commits : list
+    commits list
         List of dicts, where each dict represents a commit, which in turn contains a diff.
     path_included : bool
         True if the diff contains the path to each file, otherwise False.
-    diff_key : str
+    diff_key str
         String describing the entry of the commit that contains the diff. Default: 'diff'
-    changed_key : str
+    changed_key str
         String describing the entry of the commit that contains the changed files. Default: 'changedFiles'
 
     Returns
     -------
-    commits : list
+    commits list
         Returns the same list as the input parameter, but with entries for oldCode and newCode.
     """
     if not path_included:
@@ -69,13 +69,14 @@ def parse_list_of_commits(commits, path_included, diff_key='diff', changed_key='
 def read_json(file_name):
     """
     Reads a Json file.
+
     Parameters
     ----------
-    file_name : str
+    file_name str
         String representing the path/filename of the datafile.
     Returns
     -------
-    data: list
+    data list
         In this program, we want the json to be a list of dictionaries, and therefore, the returned information should
         be a list of dicts as well.
     """
@@ -87,13 +88,14 @@ def read_json(file_name):
 def read_jsonl(file_name):
     """
     Reads a Jsonl file.
+
     Parameters
     ----------
-    file_name : str
+    file_name str
         String representing the path/filename of the datafile.
     Returns
     -------
-    data: list
+    data list
         In this program, we want the jsonl to be a list of dictionaries, and therefore, the returned information should
         be a list of dicts as well.
     """
@@ -105,6 +107,20 @@ def read_jsonl(file_name):
 
 
 def parsed_to_txt(parsed_lst, output_path):
+    """
+    Takes a list of parsed commits and writes the old code to the src file, and the new code to the tgt file.
+
+    Parameters
+    ----------
+    parsed_lst list
+        List of parsed commits.
+    output_path string
+        String which represents the path to the directory which the files would be written to.
+
+    Returns
+    -------
+        None
+    """
     old_codes = [commit['oldCode'] for commit in parsed_lst]
     new_codes = [commit['newCode'] for commit in parsed_lst]
     code_lst = [old_codes, new_codes]
