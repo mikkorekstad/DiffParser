@@ -14,6 +14,7 @@ Python DiffParser
    SeparateFiles
    SeparateDiff
    SeparateSnippets
+   examples
 
 Indices and tables
 ==================
