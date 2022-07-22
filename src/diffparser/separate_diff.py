@@ -3,15 +3,32 @@ import separate_snippets
 
 
 def separate_single_file_diff(diff):
-    return separate_snippets.sep_by_snippets(diff.splitlines())
+    """
+    Takes a diff in the format like this: "@@ -10,7 +10,7 @@ class ClassName(ParentClass):\n  ", and separates it into
+    the format like this: {'oldCode': [], 'newCode': []}.
+
+    Parameters
+    ----------
+    diff string
+        The diff to be parsed.
+    Returns
+    -------
+    separated_single_file_diff dict
+        Dictionary with entries for the old and new code.
+    """
+    separated_single_file_diff = separate_snippets.sep_by_snippets(diff.splitlines())
+    return separated_single_file_diff
 
 
 def separate_multi_file_diff(diff):
     """
+    Takes a string with this format: '--- a/path/filename \n+++ b/path/filename\n@@ -10,7 +10,7 @@ code'
+    The output of this function looks like this: {'fileName': {'oldCode':[], 'newCode':[]}}
+
     Parameters
     ----------
-    diff : str
-        A string with this format : --- a/path/filename \n+++ b/path/filename\n@@ -int,int +int,int @@ code_start
+    diff : string
+        A string with information about the path as well as the code of the changes.
 
     Returns
     -------
@@ -36,13 +53,40 @@ def separate_multi_file_diff(diff):
 
 
 def separate_diff(diff, path_included=False):
+    """
+    This function calls one of the two functions for separating the diffs based on whether the path is included or not.
+
+    Parameters
+    ----------
+    diff string
+        String with the diff.
+    path_included bool
+        True if the path is included in the diff, otherwise False.
+    Returns
+    -------
+    separated_diff dict
+        Dictionary based on the diff created using either separate_multi_file_diff or separate_single_file_diff based
+        on whether the path variable (bool) is True or False.
+    """
     if path_included:
-        return separate_multi_file_diff(diff)
+        separated_diff = separate_multi_file_diff(diff)
+        return separated_diff
     else:
-        return separate_single_file_diff(diff)
+        separated_diff = separate_single_file_diff(diff)
+        return separated_diff
 
 
 def get_file_start_indices(diff):
+    """
+
+    Parameters
+    ----------
+    diff
+
+    Returns
+    -------
+
+    """
     # Create a dict with filenames as entries.
     file_info = {}  # {file_name: {} for file_name in list_of_files}
     # Iterate over each line in the diff
@@ -55,10 +99,23 @@ def get_file_start_indices(diff):
 
             # Store the information about where we found this line
             file_info[current_file]['firstDescribed'] = file_info[current_file].get('firstDescribed', i)
-    return separate_files.define_file_indices(file_info, diff)
+
+    separated_dict = separate_files.define_file_indices(file_info, diff)
+    print(f'{separated_dict = }')
+    return separated_dict
 
 
 def separate_by_files(diff):
+    """
+
+    Parameters
+    ----------
+    diff
+
+    Returns
+    -------
+
+    """
     # Get the information about where the files start and stop
     file_info = get_file_start_indices(diff)
     # Create empty dictionary
@@ -71,6 +128,7 @@ def separate_by_files(diff):
         # Add the split diff lines to the sep_dict dictionary
         sep_dict[key] = diff.splitlines()[start:stop]
     # Return the new sep_dict dictionary containing the separated diffs.
+    print(f'{sep_dict = }')
     return sep_dict
 
 
