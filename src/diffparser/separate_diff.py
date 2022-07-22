@@ -8,15 +8,14 @@ def separate_single_file_diff(diff):
 
 def separate_multi_file_diff(diff):
     """
-
     Parameters
     ----------
-    diff str
+    diff : str
         A string with this format : --- a/path/filename \n+++ b/path/filename\n@@ -int,int +int,int @@ code_start
 
     Returns
     -------
-    parsed_dict dictionary
+    parsed_dict : dict
         A dict with a key for each filename and the value as a nested list. Each list in the nested list is a code-
         snippet appropriately parsed.
     """
