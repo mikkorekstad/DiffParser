@@ -6,6 +6,9 @@
 Python DiffParser
 ======================================
 
+The source code for this project can be found at the github repository:
+https://github.com/mikkorekstad/DiffParser
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
