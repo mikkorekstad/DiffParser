@@ -49,13 +49,13 @@ def sep_by_snippets(un_separated):
 
         # Add the code to the correct snippet
         if line[0] == '-':
-            old_code[current_snippet].append(' ' + line[1:])
+            old_code[current_snippet].append(line[1:])
         elif line[0] == '+':
-            new_code[current_snippet].append(' ' + line[1:])
+            new_code[current_snippet].append(line[1:])
         else:
             # If the code starts with neither + / -, the code belongs to both snippets
-            old_code[current_snippet].append(line)
-            new_code[current_snippet].append(line)
+            old_code[current_snippet].append(line[1:])
+            new_code[current_snippet].append(line[1:])
 
     # Return the separated code
     return sep_dict

@@ -105,7 +105,7 @@ def read_jsonl(file_name):
     return data
 
 
-def parsed_to_txt(parsed_lst, output_path):
+def parsed_to_txt(parsed_lst, output_path, changed_key=None):
     """
     Takes a list of parsed commits and writes the old code to the src file, and the new code to the tgt file.
 
@@ -120,8 +120,21 @@ def parsed_to_txt(parsed_lst, output_path):
     -------
         None
     """
-    old_codes = [commit['oldCode'] for commit in parsed_lst]
-    new_codes = [commit['newCode'] for commit in parsed_lst]
+    print(f'{parsed_lst = }')
+    if changed_key:
+        old_codes = []
+        new_codes = []
+        for commit in parsed_lst:
+            for key, changed_file in commit[changed_key].items():
+                print(f'{key = }')
+                print(f'{changed_file = }')
+                print(f'{commit = }')
+
+                old_codes.append(commit[changed_key][key]['oldCode'])
+                new_codes.append(commit[changed_key][key]['newCode'])
+    else:
+        old_codes = [commit['oldCode'] for commit in parsed_lst]
+        new_codes = [commit['newCode'] for commit in parsed_lst]
     code_lst = [old_codes, new_codes]
     for code, extension in zip(code_lst, ['src', 'tgt']):
         with open(output_path + extension + '.txt', 'w') as fp:
@@ -134,12 +147,14 @@ def parsed_to_txt(parsed_lst, output_path):
 if __name__ == '__main__':
     """Example parser."""
     # data_set = '../../data/pypi-bugs/pypi-bugs.jsonl'
-    #data_set = '../../data/sample.json'
-    #unparsed_list = read_json(data_set)
+    data_set = '../../data/sample.json'
+    unparsed_list = read_json(data_set)
     #parsed_list = parse_list_of_commits(unparsed_list, path_included=True)
     # print(f'{parsed_list = }')
 
     # to_txt(parsed_list, output_path='../../data/pypi-bugs/outputTest/')
     # save_to_single_txt(old_, new_, '../../data/pypi-bugs/output/')
-    print(parse_diff(multi_file_diff, path_included=True))
+
+    parsed = parse_list_of_commits(unparsed_list, path_included=True)
+    parsed_to_txt(parsed, 'test.txt', changed_key='changedFiles')
     # print(parse_diff(single_file_diff, path_included=False))
