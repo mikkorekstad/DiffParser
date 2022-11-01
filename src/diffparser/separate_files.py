@@ -84,9 +84,9 @@ def define_file_indices(file_info, diff):  # TODO: Make sure this function works
     # Iterate over all except the last entries in the file_info dict
     for i, key in enumerate(list(file_info.keys())[:-1]):
         # Store information about what the next file is
-        proceeding = list(file_info.keys())[ i +1]
+        proceeding = list(file_info.keys())[i+1]
         file_info[key]['proceedingFile'] = proceeding
-        # With information about the next line, we can save the index of this snippets final line.
+        # With information about the next line, we can save the index of this snippet's final line.
         file_info[key]['lastLine'] = file_info[proceeding]['firstPathLine'] - 1
     # We can also save information about the index of the last line for the final snippet:
     file_info[list(file_info.keys())[-1]]['lastLine'] = len(diff.splitlines()) - 1
